@@ -8,7 +8,7 @@ class MeanFilter:
   def __init__(self, img , kernel_size):
     self.img = np.array(img)
     self.original = self.img.copy()
-    self.img_size_lin, self.img_size_col, *_ = self.img.shape
+    self.img_size_lin, self.img_size_col = self.img.shape
     self.kernel_size = kernel_size
     self.kernel = np.ones((kernel_size, kernel_size))
     self.central = m.floor((kernel_size / 2))
