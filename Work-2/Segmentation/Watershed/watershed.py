@@ -1,41 +1,42 @@
 import cv2
 import numpy as np
-import random
 
-def apply_watershed(image):
+def watershed_segmentation(image):
+    # Converte a imagem para escala de cinza
     gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     
+    # Aplica um filtro gaussiano para reduzir o ruído
     blurred = cv2.GaussianBlur(gray, (5, 5), 0)
     
+    # Aplica a detecção de bordas Canny
     edges = cv2.Canny(blurred, 30, 100)
     
+    # Encontra os contornos na imagem
     contours, _ = cv2.findContours(edges, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
+    
+    # Cria uma máscara para os marcadores
     markers = np.zeros(gray.shape, dtype=np.int32)
     
+    # Desenha os contornos como marcadores
     for i in range(len(contours)):
         cv2.drawContours(markers, contours, i, (i+1), -1)
     
+    # Adiciona o fundo como marcador
     cv2.circle(markers, (5, 5), 3, (255, 255, 255), -1)
     
+    # Aplica o algoritmo Watershed
     markers = cv2.watershed(image, markers)
     
-    color_map = np.zeros(image.shape, dtype=np.uint8)
+    # Cria uma cópia da imagem para desenhar as regiões segmentadas
+    colored_markers = np.copy(image)
     
-    colors = [
-        (255, 0, 0),     # Azul
-        (0, 255, 0),     # Verde
-        (0, 0, 255),     # Vermelho
-        (255, 255, 0),   # Ciano
-        (255, 0, 255),   # Magenta
-        (0, 255, 255),   # Amarelo
-    ]
+    # Preenche as regiões segmentadas com cores aleatórias
+    for marker in np.unique(markers):
+        if marker!= -1 and marker!= 0:
+            colored_markers[markers == marker] = list(np.random.choice(range(256), size=3))
     
-    for i in range(1, np.max(markers) + 1):
-        color = colors[(i - 1) % len(colors)]
-        color_map[markers == i] = color
-    
+    # Combina a imagem original com as regiões coloridas para melhor visualização
     alpha = 0.5
-    result = cv2.addWeighted(image, 1 - alpha, color_map, alpha, 0)
+    blended = cv2.addWeighted(colored_markers, alpha, image, 1-alpha, 0)
     
-    return result
+    return blended
